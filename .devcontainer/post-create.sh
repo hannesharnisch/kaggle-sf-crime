@@ -1,6 +1,5 @@
 pip install --upgrade pip
-pip install --user -r requirements.txt
-
+pip install --user -r /workspaces/sf-crime/requirements.txt
 download_dataset() {
   if [ ! "$(ls -A data/zips)" ]; then
     echo "Dataset not found."
@@ -11,7 +10,7 @@ download_dataset() {
       if [ -z "$KAGGLE_USERNAME" ] || [ -z "$KAGGLE_KEY" ]; then
         echo "Kaggle API key not found."
         read -p "Enter your Kaggle username: " KAGGLE_USERNAME
-        read -sp "Enter your Kaggle API key: " KAGGLE_KEY
+        read -p "Enter your Kaggle API key: " KAGGLE_KEY
         echo
       fi
       
