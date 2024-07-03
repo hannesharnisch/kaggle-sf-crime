@@ -7,3 +7,5 @@ matplotlib
 seaborn
 folium
 astral
+keras
+tensorflow

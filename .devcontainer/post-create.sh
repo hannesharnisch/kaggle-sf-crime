@@ -1,3 +1,6 @@
+sudo apt-get update 
+sudo apt-get install -y libhdf5-dev libhdf5-serial-dev hdf5-tools
+
 pip install --upgrade pip
 pip install --user -r /workspaces/sf-crime/requirements.txt
 download_dataset() {
