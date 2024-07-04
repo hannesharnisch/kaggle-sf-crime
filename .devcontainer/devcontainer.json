@@ -5,7 +5,9 @@
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/sf-crime,type=bind",
   "workspaceFolder": "/workspaces/sf-crime",
   "features": {
-    "ghcr.io/devcontainers-contrib/features/hatch:2": {}
+    "ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
+        "packages": "libhdf5-dev,libhdf5-serial-dev,hdf5-tools"
+    }
   },
   "customizations": {
     "vscode": {
