@@ -8,7 +8,8 @@ from keras.optimizers import Adam
 from keras.utils import to_categorical
 
 # Load the DataFrame
-df = pd.read_csv('temp/train.csv')  # Adjust the path to your CSV file
+# Adjust the path to your CSV file
+df = pd.read_csv('data/tmp/encoded_train.csv')
 
 # Separate features and target label
 X = df.drop(columns=['Category']).values
@@ -17,10 +18,11 @@ y = df['Category'].values
 # Encode the labels
 le = LabelEncoder()
 y = le.fit_transform(y)
-y = to_categorical(y, num_classes=39)  # Adjust the number of classes as needed
+y = to_categorical(y, num_classes=30)  # Adjust the number of classes as needed
 
 # Split the data into training and validation sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42)
 
 # Standardize the features
 scaler = StandardScaler()
@@ -29,9 +31,13 @@ X_test = scaler.transform(X_test)
 
 # Build the model
 model = Sequential()
-model.add(Dense(128, input_dim=X_train.shape[1], activation='relu', kernel_regularizer='l2'))
+model.add(Dense(
+    64, input_dim=X_train.shape[1], activation='relu', kernel_regularizer='l2'))
 model.add(Dense(64, activation='relu', kernel_regularizer='l2'))
-model.add(Dense(39, activation='softmax'))  # 39 classes with softmax activation
+model.add(Dense(64, activation='sigmoid', kernel_regularizer='l2'))
+model.add(Dense(32, activation='sigmoid', kernel_regularizer='l2'))
+# 30 classes with softmax activation
+model.add(Dense(30, activation='softmax'))
 
 
 # Compile the model
