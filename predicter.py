@@ -1,11 +1,13 @@
+from os import path
 from pandas.tseries.holiday import USFederalHolidayCalendar as calendar
 import re
+import time
+import argparse
 from astral import LocationInfo
 import joblib
 import numpy as np
 from datetime import datetime
 from astral.sun import sun
-
 import pandas as pd
 import pytz
 from sklearn.discriminant_analysis import StandardScaler
@@ -39,7 +41,7 @@ def validate_model(input: str):
         return False
     return input in ['1', '2', '3']
 
-############################################################################################################
+    ############################################################################################################
 
 
 def encode(encoded_train):
@@ -178,67 +180,118 @@ def is_at_night(date, sun_info):
         return dusk < date < dawn
 
 
+def get_district_from_coordinates(lat, long):
+    import geopandas as gpd
+    from shapely.geometry import Point
+    # Load the GeoJSON file
+    gdf = gpd.read_file('./data/sf-districts.json')
+    point_of_interest = Point(long, lat)
+
+    # Find the district containing the point
+    district = gdf[gdf.geometry.contains(point_of_interest)]['DISTRICT']
+
+    if not district.empty:
+        return district.iloc[0]
+    else:
+        return None
+
+
+MODELS = {
+    1: ("Decision Tree", './models/decision_tree/decision_tree.pkl'),
+    2: ("Random Forest", './models/random_forest/random_forest_model.pkl'),
+    3: ("XGBoost", './models/xgboost/xgboost.pkl', './models/xgboost/label_encoder.pkl')
+}
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        prog='SF-Crime Predicter',
+        description='This program uses different models to predict the category of a crime in San Francisco.')
+
+    parser.add_argument('-m', '--model', type=int, choices=[1, 2, 3], default=1,
+                        help='Model to use: 1 (Decision Tree), 2 (Random Forest), 3 (XGBoost)')
+    parser.add_argument('-t', '--time', type=str, default=datetime.today(),
+                        help='Date and time of the crime')
+    parser.add_argument('-a', '--address', nargs="*", type=str,
+                        help='Address of the location')
+    parser.add_argument('--long', type=float,
+                        help='Longitude of the location (SF: -123 - -122.3)')
+    parser.add_argument('--lat', type=float,
+                        help='Latitude of the location (SF: 37.7 - 37.8)')
+    parser.add_argument('-d', '--district', nargs='?', type=str,
+                        choices=['BAYVIEW', 'CENTRAL', 'INGLESIDE', 'MISSION', 'NORTHERN',
+                                 'PARK', 'RICHMOND', 'SOUTHERN', 'TARAVAL', 'TENDERLOIN'],
+                        help='District of the Crime')
+    parser.add_argument('-lm', '--list-models',
+                        action='store_true', help='List all available models')
+
+    args = parser.parse_args()
+
+    if args.list_models:
+        print(f"{'Id':<4}{'Name':<15}{'Available':<10}")
+        print("-" * 40)
+        for id, model in MODELS.items():
+            print(f"{id:<4}{model[0]:<15}{
+                  ('YES' if path.exists(model[1]) else 'NO'):<10}")
+        exit()
 
     # Benutzereingaben erfassen mit Validierung
-    while True:
-        x = input("Bitte geben Sie x (long) ein: ")
-        if validate_number(x, min=-123, max=-122.3):
-            x = float(x)
+    while args.long is None:
+        args.long = input("Please enter the longitude: ")
+        if validate_number(args.long, min=-123, max=-122.3):
+            args.long = float(args.long)
             break
-        print("Ungültige Eingabe. Bitte geben Sie eine Zahl ein.")
+        print("Invalid Entry. Please provide a number (SF: -123 - -122.3)")
 
-    while True:
-        y = input("Bitte geben Sie y (lat) ein: ")
-        if validate_number(y, min=37.7, max=37.8):
-            y = float(y)
+    while args.lat is None:
+        args.lat = input("Please enter the latitude: ")
+        if validate_number(args.lat, min=37.7, max=37.8):
+            args.lat = float(args.lat)
             break
-        print("Ungültige Eingabe. Bitte geben Sie eine gültige Zahl größer als 0 ein.")
-
-    while True:
-        date = input(
-            "Bitte geben Sie das Datum ein (z.B. 2023-04-01) oder drücken Sie Enter für das heutige Datum: ")
-        if not date or validate_date(date):
-            date = date or datetime.today().strftime('%Y-%m-%d')
-            break
-        print("Ungültige Eingabe. Bitte geben Sie das Datum im Format YYYY-MM-DD ein.")
+        print("Invalid Entry. Please provide a number (SF: 37.7 - 37.8)")
 
     # Beispiel für eine einfache Texteingabe ohne Validierung
-    district = input("Bitte geben Sie den Bezirk ein: ")
-    address = input("Bitte geben Sie die Addresse ein: ")
+    if not args.district:
+        print("Trying to look up district from coordinates...")
+        args.district = get_district_from_coordinates(args.lat, args.long)
+        if not args.district:
+            print(
+                "District could not be determined. Please try another location or enter the district manually.")
+            exit(0)
+        print(f"Location is in District: {args.district}")
 
-    while True:
-        model_name = input(
-            "Bitte geben Sie ein Modell ein: 1 (Decision Tree), 2 (Random Forest), 3 (XGBoost): ")
-        if not model_name or validate_model(model_name):
-            if model_name == '1':
-                model = joblib.load('./models/decision_tree/decision_tree.pkl')
-            elif model_name == '2':
-                model = joblib.load('./models/random_forest/random_forest_model.pkl')
-            elif model_name == '3':
-                model = joblib.load('./models/xgboost/xgboost.pkl')
-                label_encoder = joblib.load("./models/xgboost/label_encoder.joblib")
-            break
-        print("Ungültige Eingabe. Bitte geben Sie ein gültiges Modell ein")
+    address = " ".join(args.address)
+    if not address:
+        address = input("Bitte geben Sie die Addresse ein: ")
 
-    df = get_dataframe(x, y, date, district, address)
+    model = joblib.load(MODELS[args.model][1])
+
+    print("\nPreparing Data for Prediction...")
+    df = get_dataframe(args.long, args.lat, args.time,
+                       args.district, address)
     df = df[model.feature_names_in_]
+    print("Starting Prediction...\n")
+    start_time = time.time()
     # Vorhersage durchführen mit DataFrame
     prediction = model.predict_proba(df)
+
+    end_time = time.time()
+    prediction_time = end_time - start_time
 
     target_categories = model.classes_
     mapped_predictions = dict(zip(target_categories, prediction[0]))
     sorted_predictions = sorted(
         mapped_predictions.items(), key=lambda x: x[1], reverse=True)
     top_3_predictions = sorted_predictions[:3]
-
-    print("\nTop 3 Vorhersagen:\n")
+    print("\nTop 3 Predictions:\n")
     print(f"{'Category':<20}{'Confidence':<10}")
     print("-" * 30)
     for category, probability in top_3_predictions:
         # Use label encoder for XGBoost
-        if model_name == '3':
+        if args.model == 3:
+            label_encoder = joblib.load(MODELS[args.model][2])
             decoded_cat = label_encoder.inverse_transform([category])[0]
             print(f"{decoded_cat:<20}{probability:.2f}")
-        else: 
+        else:
             print(f"{category:<20}{probability:.2f}")
+
+    print(f"\nPrediction time: {prediction_time:.4f} seconds")
