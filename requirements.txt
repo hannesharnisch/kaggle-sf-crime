@@ -9,3 +9,7 @@ folium
 astral
 keras
 tensorflow
+tqdm
+xgboost
+joblib
+argparse

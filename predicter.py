@@ -198,8 +198,9 @@ def get_district_from_coordinates(lat, long):
 
 MODELS = {
     1: ("Decision Tree", './models/decision_tree/decision_tree.pkl'),
-    2: ("Random Forest", './models/random_forest/random_forest_model.pkl'),
-    3: ("XGBoost", './models/xgboost/xgboost.pkl', './models/xgboost/label_encoder.pkl')
+    2: ("KNN (K=25)", './models/knn/knn.pkl'),
+    3: ("Random Forest", './models/random_forest/random_forest_model.pkl'),
+    4: ("XGBoost", './models/xgboost/xgboost.pkl', './models/xgboost/label_encoder.pkl'),
 }
 
 if __name__ == "__main__":
