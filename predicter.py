@@ -213,6 +213,11 @@ if __name__ == "__main__":
         if not model_name or validate_model(model_name):
             if model_name == '1':
                 model = joblib.load('./models/decision_tree/decision_tree.pkl')
+            elif model_name == '2':
+                model = joblib.load('./models/random_forest/random_forest_model.pkl')
+            elif model_name == '3':
+                model = joblib.load('./models/xgboost/xgboost.pkl')
+                label_encoder = joblib.load("./models/xgboost/label_encoder.joblib")
             break
         print("Ungültige Eingabe. Bitte geben Sie ein gültiges Modell ein")
 
@@ -231,4 +236,9 @@ if __name__ == "__main__":
     print(f"{'Category':<20}{'Confidence':<10}")
     print("-" * 30)
     for category, probability in top_3_predictions:
-        print(f"{category:<20}{probability:.2f}")
+        # Use label encoder for XGBoost
+        if model_name == '3':
+            decoded_cat = label_encoder.inverse_transform([category])[0]
+            print(f"{decoded_cat:<20}{probability:.2f}")
+        else: 
+            print(f"{category:<20}{probability:.2f}")
