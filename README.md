@@ -26,7 +26,7 @@ The CRISP-DM process stepps are processed in files and directories starting with
 Before you can train the models, make sure that the data preparation step has been executed. This creates the preprocessed data in the "data/tmp" directory. After that you can execute the Jupyter notebooks in the "03-modelling" directory.
 
 ## How to execute the CLI prediction tool
-The CLI prediction tool is implemented in the file "predictor.py". 
+The CLI prediction tool is implemented in the file "predicter.py". 
 
 Sample execution of this script:
 
