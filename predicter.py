@@ -184,7 +184,7 @@ def get_district_from_coordinates(lat, long):
     import geopandas as gpd
     from shapely.geometry import Point
     # Load the GeoJSON file
-    gdf = gpd.read_file('./data/sf-districts.json')
+    gdf = gpd.read_file('./sf-districts.json')
     point_of_interest = Point(long, lat)
 
     # Find the district containing the point
@@ -200,7 +200,7 @@ MODELS = {
     1: ("Decision Tree", './models/decision_tree/decision_tree.pkl'),
     2: ("KNN (K=25)", './models/knn/knn.pkl'),
     3: ("Random Forest", './models/random_forest/random_forest_model.pkl'),
-    4: ("XGBoost", './models/xgboost/xgboost.pkl', './models/xgboost/label_encoder.pkl'),
+    4: ("XGBoost", './models/xgboost/xgboost.pkl', './models/xgboost/label_encoder.joblib'),
 }
 
 if __name__ == "__main__":
@@ -208,8 +208,8 @@ if __name__ == "__main__":
         prog='SF-Crime Predicter',
         description='This program uses different models to predict the category of a crime in San Francisco.')
 
-    parser.add_argument('-m', '--model', type=int, choices=[1, 2, 3], default=1,
-                        help='Model to use: 1 (Decision Tree), 2 (Random Forest), 3 (XGBoost)')
+    parser.add_argument('-m', '--model', type=int, choices=[1, 2, 3, 4], default=1,
+                        help='Model to use: 1 (Decision Tree), 2 (KNN), 3 (Random Forest), 4 (XGBoost)')
     parser.add_argument('-t', '--time', type=str, default=datetime.today(),
                         help='Date and time of the crime')
     parser.add_argument('-a', '--address', nargs="*", type=str,
@@ -263,10 +263,10 @@ if __name__ == "__main__":
     address = " ".join(args.address)
     if not address:
         address = input("Bitte geben Sie die Addresse ein: ")
-
+    print("\nLoading Model " + MODELS[args.model][0])
     model = joblib.load(MODELS[args.model][1])
 
-    print("\nPreparing Data for Prediction...")
+    print("Preparing Data for Prediction...")
     df = get_dataframe(args.long, args.lat, args.time,
                        args.district, address)
     df = df[model.feature_names_in_]
@@ -288,7 +288,7 @@ if __name__ == "__main__":
     print("-" * 30)
     for category, probability in top_3_predictions:
         # Use label encoder for XGBoost
-        if args.model == 3:
+        if args.model == 4:
             label_encoder = joblib.load(MODELS[args.model][2])
             decoded_cat = label_encoder.inverse_transform([category])[0]
             print(f"{decoded_cat:<20}{probability:.2f}")
