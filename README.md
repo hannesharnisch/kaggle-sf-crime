@@ -20,7 +20,7 @@ This project also includes a python script which can predict custom data with th
 
 
 ## How the project is structered
-The CRISP-DM process stepps are processed in files and directories starting with a number like "01-data-understanding.ipynb". "02-data-preparation.ipynb" will preprocess the data and create new .csv files in "data/tmp" which are necessary to run the models.
+The CRISP-DM process steps are processed in files and directories starting with a number like "01-data-understanding.ipynb". "02-data-preparation.ipynb" will preprocess the data and create new .csv files in "data/tmp" which are necessary to run the models.
 
 ## How to train and execute models
 Before you can train the models, make sure that the data preparation step has been executed. This creates the preprocessed data in the "data/tmp" directory. After that you can execute the Jupyter notebooks in the "03-modelling" directory.
